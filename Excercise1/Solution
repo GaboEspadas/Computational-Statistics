@@ -1,0 +1,77 @@
+"""
+
+Series 1 Simple Linear Regression
+Author: Gabriel Espadas
+
+"""
+
+import tensorflow as tf
+import numpy as np
+
+## 2 - a)
+# Write a sequence of R-commands which randomly generates 100 times a vector of y-values according
+# to the above model with the given x-values and generates a vector of slopes of the regression lines.
+
+x_train = np.arange(1, 41)
+n_samples = x_train.shape[0]
+y_train = 2 * x_train + np.random.normal(0, 5, n_samples)
+
+# tf graph input
+X = tf.placeholder("float")
+Y = tf.placeholder("float")
+
+# model weights
+W = tf.Variable(np.random.rand(), name="weights")
+b = tf.Variable(np.random.rand(), name="bias")
+
+# Linear model
+pred = tf.add(tf.multiply(X, W), b)
+
+# Mean Squared Error
+cost = tf.reduce_sum(tf.pow(pred - Y)) / (2 * n_samples)
+
+# Gradient Descent
+# Parameters
+learning_rate = 0.01
+training_epochs = 1000
+display_step = 50
+optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+
+# Initialize
+init = tf.global_variables_initializer()
+
+# Training
+
+with tf.Session() as sess:
+    sess.run(init)
+
+    for epoch in range(training_epochs):
+        for (x,y) in zip(x_train,y_train):
+            sess.run(optimizer,feed_dict={X:x,Y:y})
+
+            # Display logs per epoch step
+            if (epoch + 1) % display_step == 0:
+                c = sess.run(cost, feed_dict={X: x_train, Y: y_train})
+                print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(c), \
+                      "W=", sess.run(W), "b=", sess.run(b))
+
+    print("Optimization Finished!")
+    training_cost = sess.run(cost, feed_dict={X: x_train, Y: y_train})
+    print("Training cost=", training_cost, "W=", sess.run(W), "b=", sess.run(b), '\n')
+
+
+
+# I will use tensor flow for modelling which is of course equivalent to use a tank to kill a mouse but it is just
+# to gain experience with its API's
+
+def input_fn():
+    dataset = tf.data.Dataset.from_tensor_slices({"x": tf.range(1, 40)})
+    iterator = dataset.make_one_shot_iterator()
+    features, labels = iterator.get_next()
+    return features, labels
+
+
+for i in range(100):
+    y = [2 * i + 1 + 5 * tf.random_normal() for i in x]
+    linear_model = tf.estimator.LinearRegressor(feature_columns=x)
+    linear_model.train()
